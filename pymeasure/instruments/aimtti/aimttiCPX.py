@@ -209,7 +209,7 @@ class CPXBase(SCPIUnknownMixin, Instrument):
         """Go to local. Make sure all output are disabled first."""
         self.write("LOCAL")
 
-class CPX400DP(CPXBase):
+class AimttiCPX400DP(CPXBase):
     ch_1: CPXChannel = Instrument.ChannelCreator(
         CPXChannel, "1", voltage_range=[0, 60], current_range=[0, 20]
     )

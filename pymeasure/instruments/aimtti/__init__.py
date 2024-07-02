@@ -23,5 +23,5 @@
 #
 
 from .aimttiPL import PL068P, PL155P, PL303P, PL601P, PL303QMDP, PL303QMTP
-from .aimttiCPX import CPX400DP
-from .aimttiTGF import TGF4082
+from .aimttiCPX import AimttiCPX400DP
+from .aimttiTGF import AimttiTGF4082

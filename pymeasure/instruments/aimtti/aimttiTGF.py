@@ -159,7 +159,7 @@ class TGF4000Base(SCPIUnknownMixin, Instrument):
         self.write("LOCAL")
 
 
-class TGF4082(TGF4000Base):
+class AimttiTGF4082(TGF4000Base):
     ch_1: TGF4000Channel = Instrument.ChannelCreator(
         TGF4000Channel, "1",
     )

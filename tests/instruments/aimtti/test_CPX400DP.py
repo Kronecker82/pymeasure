@@ -25,12 +25,12 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.aimtti.aimttiCPX import CPX400DP
+from pymeasure.instruments.aimtti.aimttiCPX import AimttiCPX400DP
 
 
 def test_voltage_setpoint():
     with expected_protocol(
-        CPX400DP,
+        AimttiCPX400DP,
         [("V1V 0.1", None),
          ("V1?", "V1 0.1")
          ],
@@ -41,7 +41,7 @@ def test_voltage_setpoint():
 
 def test_current_limit():
     with expected_protocol(
-        CPX400DP,
+        AimttiCPX400DP,
         [("I2 5", None),
          ("I2?", "I2 5")
          ],
