@@ -31,20 +31,20 @@ class TGF4000Channel(Channel):
 
     Channels of the function generator. The channels are number from right-to-left, starting at 1.
     """
-    WAVE = ['SINE', 'SQUARE', 'RAMP', 'TRIANG', 'PULSE', 'NOISE',
-            'PRBSPN7', 'PRBSPN9', 'PRBSPN11', 'PRBSPN15', 'PRBSPN20', 'PRBSPN23', 'PRBSPN29', 'PRBSPN31',
-            'ARB']
 
     def __init__(self, parent, id, voltage_range: list = None, current_range: list = None):
         super().__init__(parent, id)
 
-        # self.voltage_setpoint_values = voltage_range
-        # self.current_limit_values = current_range
+    WAVE = ['SINE', 'SQUARE', 'RAMP', 'TRIANG', 'PULSE', 'NOISE',
+            'PRBSPN7', 'PRBSPN9', 'PRBSPN11', 'PRBSPN15', 'PRBSPN20', 'PRBSPN23', 'PRBSPN29', 'PRBSPN31',
+            'ARB']
 
     # Continuos carrier wave commands
     select_wave = Channel.setting(
-        "WAVE %s",
-        """ Control the output waveform for the current channel.""",
+        "CHN {ch}\nWAVE %s",
+        """ Control the output waveform for the current channel. Can be: 'SINE', 'SQUARE', 'RAMP', 'TRIANG', 'PULSE', 'NOISE',
+            'PRBSPN7', 'PRBSPN9', 'PRBSPN11', 'PRBSPN15', 'PRBSPN20', 'PRBSPN23', 'PRBSPN29', 'PRBSPN31',
+            'ARB'""",
         validator=strict_discrete_set,
         values=WAVE
     )
@@ -52,10 +52,19 @@ class TGF4000Channel(Channel):
     # FREQ < NRF >
     # PER < NRF >
     # AMPLRNG < CPD >
-    # AMPL < NRF >
+
+    set_amplitude = Channel.setting(
+        "CHN {ch}\nAMPL %g",
+        """Set the amplitude to <NRF> Vpp"""
+    )
+
     # HILVL < NRF >
     # LOLVL < NRF >
     # DCOFFS < NRF >
+    set_offset = Channel.setting(
+        "CHN {ch}\nDCOFFS %g",
+        """Set the dc offset to <NRF> Volts"""
+    )
     # OUTPUT < CPD >
     # ZLOAD < CPD >
     # SQRSYMM < NRF >
@@ -68,46 +77,46 @@ class TGF4000Channel(Channel):
 
     # Pulse generator commands
     set_pulse_freq = Channel.setting(
-        "PULSFREQ %g",
+        "CHN {ch}\nPULSFREQ %g",
         """Set the pulse waveform frequency to <NRF> Hz""",
         validator=strict_range,
         values=[0, 80e6]
     )
 
     set_pulse_period = Channel.setting(
-        "PULSPER %g",
+        "CHN {ch}\nPULSPER %g",
         """Set the pulse waveform period to <NRF> sec""",
     )
 
     set_pulse_width = Channel.setting(
-        "PULSWID %g",
+        "CHN {ch}\nPULSWID %g",
         """Set the pulse waveform width to <NRF> sec""",
     )
 
-    set_pulse_width = Channel.setting(
-        "PULSSYMM %g",
+    set_pulse_symmetry = Channel.setting(
+        "CHN {ch}\nPULSSYMM %g",
         """Set the pulse waveform symmetry to <NRF> %""",
         validator=strict_range,
         values=[0, 100]
     )
 
     set_pulse_edge = Channel.setting(
-        "PULSEDGE %g",
+        "CHN {ch}\nPULSEDGE %g",
         """Set the pulse waveform edges (positive and negative edge) to <NRF> sec""",
     )
 
     set_pulse_rise = Channel.setting(
-        "PULSRISE %g",
+        "CHN {ch}\nPULSRISE %g",
         """Set the pulse waveform positive edge to <NRF> sec""",
     )
 
     set_pulse_fall = Channel.setting(
-        "PULSFALL %g",
+        "CHN {ch}\nPULSFALL %g",
         """Set the pulse waveform negative edge to <NRF> sec""",
     )
 
     set_pulse_delay = Channel.setting(
-        "PULSDLY %g",
+        "CHN {ch}\nPULSDLY %g",
         """Set the pulse waveform delay to <NRF> sec""",
     )
 
@@ -116,6 +125,32 @@ class TGF4000Channel(Channel):
 
     # Arbitrary waveform commands
 
+    # Burst commands
+    set_burst_trigger_source = Channel.setting(
+        "CHN {ch}\nBSTTRGSRC %s",
+        """Set the burst trigger source to <INT>, <EXT> or <MAN>""",
+        validator=strict_discrete_set,
+        values=['INT', 'EXT', 'MAN']
+    )
+
+    set_burst_trigger_count = Channel.setting(
+        "CHN {ch}\nBSTCOUNT %d",
+        """Set the burst count to <nr1> cycles.""",
+    )
+
+    set_burst = Channel.setting(
+        "CHN {ch}\nBST %s",
+        """Set the burst to <OFF>, <NCYC>, <GATED> or <INFINITE>.""",
+        validator=strict_discrete_set,
+        values=['OFF', 'NCYC', 'GATED', 'INFINITE']
+    )
+
+    set_output = Channel.setting(
+        "CHN {ch}\nOUTPUT %s",
+        """Set the output to <ON>, <OFF>, <NORMAL> or <INVERT>""",
+        validator=strict_discrete_set,
+        values=['ON', 'OFF', 'NORMAL', 'NORMAL']
+    )
 
 
 
@@ -133,12 +168,8 @@ class TGF4000Base(SCPIUnknownMixin, Instrument):
     .. code-block:: python
 
         fun = TGF4082("ASRL7::INSTR")
-        # psu.reset()
-        # psu.ch_2.voltage = 1.2
-        # psu.ch_2.output_enabled = True
         # ...
-        # psu.ch_2.output_enabled = False
-        # psu.local()
+        # fun.local()
 
     """
 
@@ -146,17 +177,30 @@ class TGF4000Base(SCPIUnknownMixin, Instrument):
         kwargs.setdefault("timeout", 5000)
         super().__init__(adapter, name, **kwargs)
 
-    select_channel = Instrument.control(
-        "CHN?",
-        "CHN{ch}",
-        "Set channel as the destination for subsequent commands. Can be 1 or 2.",
-        validator=strict_discrete_set,
-        values=[1, 2]
-    )
+    # select_channel = Instrument.control(
+    #     "CHN?",
+    #     "CHN %s",
+    #     "Set channel as the destination for subsequent commands. Can be 1 or 2.",
+    #     validator=strict_discrete_set,
+    #     values=[1, 2],
+    #     cast=int
+    # )
 
     def local(self):
         """Go to local. Make sure all output are disabled first."""
         self.write("LOCAL")
+
+    def trigger(self):
+        """This command is the same as pressing the TRIGGER key."""
+        self.write("*TRG")
+
+    def clear(self):
+        """Clears the Status structure. This indirectly clears the Status Byte Register."""
+        self.write("*CLS")
+
+    def rst(self):
+        """eset the instrument parameters to their default values. """
+        self.write("*RST")
 
 
 class AimttiTGF4082(TGF4000Base):

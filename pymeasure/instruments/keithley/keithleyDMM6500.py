@@ -235,6 +235,9 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         """Close the connection"""
         self.adapter.close()
 
+    def local(self):
+        self.write("LOGOUT")
+
     ###########
     # General #
     ###########

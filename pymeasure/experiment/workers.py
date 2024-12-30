@@ -174,6 +174,8 @@ class Worker(StoppableThread):
             self.procedure.evaluate_metadata()
             self.results.store_metadata()
             self.procedure.execute()
+            #self.procedure.execute_compact()
+            print("Porco il demonio")
         except (KeyboardInterrupt, SystemExit):
             self.handle_abort()
         except Exception:
